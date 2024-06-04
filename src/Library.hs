@@ -23,20 +23,13 @@ tieAvanzado = UnaNave "Nave de Darth Vader" 500 300 200 superTurbo
 
 milleniumFalcon = UnaNave "Millenium Falcon" 1000 500 50 (reparacionDeEmergencia.modificarEscudos 100)
 
+--Modelo una nueva nave
 razorCrest = UnaNave "Razor Crest" 250 250 100 turboDeEmergencia
 
 --Poderes
 type Poder = Nave -> Nave
 
-turbo :: Poder
-turbo = modificarAtaque 25
-
-reparacionDeEmergencia :: Poder
-reparacionDeEmergencia = modificarDurabilidad 50.modificarAtaque (-30)
-
-superTurbo :: Poder
-superTurbo = modificarDurabilidad 45.turbo.turbo.turbo
-
+--Funciones auxiliares
 modificarDurabilidad :: Number -> Poder
 modificarDurabilidad numero nave = nave {durabilidad = restaNoNegativa (durabilidad nave) numero}
 
@@ -49,6 +42,17 @@ modificarEscudos numero nave = nave {escudo = escudo nave + numero}
 restaNoNegativa :: Number -> Number -> Number
 restaNoNegativa n m = max 0 (n - m)
 
+--Poderes
+turbo :: Poder
+turbo = modificarAtaque 25
+
+reparacionDeEmergencia :: Poder
+reparacionDeEmergencia = modificarDurabilidad 50.modificarAtaque (-30)
+
+superTurbo :: Poder
+superTurbo = modificarDurabilidad 45.turbo.turbo.turbo
+
+--Invento un nuevo poder
 turboDeEmergencia :: Poder
 turboDeEmergencia = turbo.reparacionDeEmergencia
 
@@ -96,8 +100,37 @@ navesPeligrosas numero nave = ataque nave > numero
 navesFueraDeCombate :: Nave -> Estrategia
 navesFueraDeCombate nave = fueraDeCombate . atacar nave
 
+--Invento una nueva estrategia
+navesConPocaDurabilidad :: Estrategia
+navesConPocaDurabilidad nave = durabilidad nave <= 200
+
 ataqueSorpresa :: Estrategia -> Nave -> Flota -> Flota
 ataqueSorpresa estrategia nave = mapSelectivo (atacar nave) estrategia
 
 mapSelectivo :: (a -> a) -> (a -> Bool) -> [a] -> [a]
 mapSelectivo cambio condicion lista = map cambio (filter condicion lista) ++ filter (not.condicion) lista
+
+
+--PUNTO 6
+--Determinar que estrategia es mejor
+mision :: Estrategia -> Estrategia -> Nave -> Flota -> Flota
+mision estrategia1 estrategia2 nave flota = ataqueSorpresa (mejorEstrategia estrategia1 estrategia2 nave flota) nave flota
+
+mejorEstrategia :: Estrategia -> Estrategia -> Nave -> Flota -> Estrategia
+mejorEstrategia estrategia1 estrategia2 nave flota | durabilidadTotal (ataqueSorpresa estrategia1 nave flota) < durabilidadTotal (ataqueSorpresa estrategia2 nave flota) = estrategia1
+                                                   | otherwise = estrategia2
+
+
+--PUNTO 7
+--Flota infinita de naves
+flotaInfinita :: [Flota]
+flotaInfinita flota = cycle flota
+
+{- Para determinar la durabilidad total de la flota, debemos obtener la durabilidad de cada una
+de las naves, lo cual no es posible ya que no podemos recorrer por completo una lista infinita.
+ Para llevar a cabo una misión (la elección de una estrategia sobre otra) debemos evaluar cual es más
+conveniente según la reducción de la durabilidad total de la flota, y como indicado en la respuesta
+anterior, esto no es posible, por lo que tampoco es posible llevar a cabo una misión sobre una flota
+infinita
+
+-}
